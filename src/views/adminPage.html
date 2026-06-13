@@ -1357,6 +1357,26 @@ const lunarBiz = {
     }
 
     function getReminderSettings(subscription) {
+      // 新版：优先按"提醒规则"显示真实启用的规则（旧的 reminderValue 仅作兜底）
+      const ruleArr = Array.isArray(subscription.reminderRules) ? subscription.reminderRules : null;
+      if (ruleArr && ruleArr.length > 0) {
+        const enabled = ruleArr.filter(r => r && r.isEnabled !== false);
+        const use = enabled.length > 0 ? enabled : ruleArr;
+        const ruleText = (r) => {
+          const u = (r.unit === 'hours' || r.unit === 'hour') ? '小时' : '天';
+          if (r.type === 'on_expiry' || (r.type === 'before_expiry' && Number(r.value) === 0)) return '到期当天';
+          if (r.type === 'after_expiry') return '到期后' + Number(r.value) + u;
+          return '提前' + Number(r.value) + u;
+        };
+        const primary = use[0];
+        return {
+          unit: (primary.unit === 'hours' || primary.unit === 'hour') ? 'hour' : 'day',
+          value: Number(primary.value),
+          displayText: use.map(ruleText).join(' / '),
+          multiple: use.length > 1
+        };
+      }
+
       const fallbackDays = subscription.reminderDays !== undefined ? subscription.reminderDays : 7;
       let unit = subscription.reminderUnit || '';
       let value = subscription.reminderValue;
@@ -1655,9 +1675,11 @@ const lunarBiz = {
           : '';
         const startDateHtml = startDateText ? createHoverText(startDateText, 30, 'text-xs text-gray-500 mt-1') : '';
 
-        const reminderExtra = reminder.value === 0
-          ? '<div class="text-xs text-gray-500 mt-1">仅到期时提醒</div>'
-          : (reminder.unit === 'hour' ? '<div class="text-xs text-gray-500 mt-1">小时级提醒</div>' : '');
+        const reminderExtra = reminder.multiple
+          ? ''
+          : (reminder.value === 0
+            ? '<div class="text-xs text-gray-500 mt-1">仅到期时提醒</div>'
+            : (reminder.unit === 'hour' ? '<div class="text-xs text-gray-500 mt-1">小时级提醒</div>' : ''));
         const reminderHtml = '<div><i class="fas fa-bell mr-1"></i>' + reminder.displayText + '</div>' + reminderExtra;
 
         const currencySymbols = {

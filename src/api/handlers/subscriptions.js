@@ -91,6 +91,16 @@ async function handleSubscriptions(request, env, path) {
   if (path === '/subscriptions') {
     if (method === 'GET') {
       const subscriptions = await getAllSubscriptions(env);
+      // 附带提醒规则，供订阅列表正确显示（不再只读旧的 reminderValue 字段）
+      try {
+        const remindersRepo = await import('../../data/reminders.repo.js');
+        await Promise.all(subscriptions.map(async (s) => {
+          const rules = await remindersRepo.listForSubscription(env, s.id);
+          if (Array.isArray(rules) && rules.length > 0) s.reminderRules = rules;
+        }));
+      } catch (e) {
+        console.error('[订阅列表] 附带提醒规则失败:', e);
+      }
       return new Response(JSON.stringify(subscriptions), { headers: { 'Content-Type': 'application/json' } });
     }
 
