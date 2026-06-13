@@ -1,0 +1,26 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add upstream
+        run: |
+          git remote add upstream https://github.com/wangwangit/SubsTracker.git
+          git fetch upstream
+          git checkout master
+          git merge upstream/master --no-edit
+          git push origin master
