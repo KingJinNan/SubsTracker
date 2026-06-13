@@ -1,13 +1,10 @@
 name: Sync upstream
-
 on:
   schedule:
     - cron: "0 */12 * * *"
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -16,8 +13,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add upstream
+          fetch-depth: 0
+      - name: Sync from upstream
         run: |
           git remote add upstream https://github.com/wangwangit/SubsTracker.git
           git fetch upstream
